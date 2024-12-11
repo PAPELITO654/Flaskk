@@ -1,1 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Gestión de Usuarios</h1>
+    <form id="userForm">
+        <input type="text" name="txtUsuarioFA" placeholder="Usuario" required>
+        <input type="password" name="txtContrasenaFA" placeholder="Contraseña" required>
+        <button type="submit">Guardar</button>
+    </form>
+    <ul id="userList"></ul>
+
+    <script>
+        $(document).ready(function () {
+            function loadUsers() {
+                $.getJSON("/usuarios", function (data) {
+                    $("#userList").empty();
+                    data.forEach(function (user) {
+                        $("#userList").append(`<li>${user.Nombre_Usuario}</li>`);
+                    });
+                });
+            }
+
+            loadUsers();
+
+            $("#userForm").on("submit", function (e) {
+                e.preventDefault();
+                $.post("/usuarios/guardar", $(this).serialize(), function (response) {
+                    alert("Usuario agregado: " + response.username);
+                    loadUsers();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
 
