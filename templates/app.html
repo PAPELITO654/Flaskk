@@ -145,15 +145,29 @@
         </form>
         
         <h2>Lista de Usuarios Registrados</h2>
-        <table class="table table-sm">
-            <thead>
-                <tr>
-                    <th>Usuario</th>
-                    <th>Contraseña</th>
-                </tr>
-            </thead>
-            <tbody id="tbodyLog"></tbody>
-        </table>
+       <table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nombre de Usuario</th>
+      <th>Contraseña</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody id="tabla-usuarios">
+    {% for usuario in usuarios %}
+    <tr>
+      <td>{{ usuario.ID }}</td>
+      <td>{{ usuario.Nombre_Usuario }}</td>
+      <td>{{ usuario.Contrasena }}</td>
+      <td>
+        <button class="btn btn-warning btn-editar" data-id="{{ usuario.ID }}" data-usuario="{{ usuario.Nombre_Usuario }}" data-contrasena="{{ usuario.Contrasena }}">Editar</button>
+        <button class="btn btn-danger btn-eliminar" data-id="{{ usuario.ID }}">Eliminar</button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
