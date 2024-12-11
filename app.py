@@ -23,73 +23,57 @@ pusher_client = pusher.Pusher(
 
 @app.route("/")
 def index():
-    return render_template("app.html")
-
-@app.route("/usuarios")
-def usuarios():
-    return render_template("usuarios.html")
+    if not con.is_connected():
+        con.reconnect()
+    cursor = con.cursor()
+    cursor.execute("SELECT * FROM tst0_usuarios ORDER BY Id_Usuario DESC")
+    registros = cursor.fetchall()
+    return render_template("app.html", usuarios=registros)
 
 # Ruta para guardar un nuevo usuario
 @app.route("/usuarios/guardar", methods=["POST"])
 def usuarios_guardar():
-    usuario = request.form["txtUsuarioFA"]
-    contrasena = request.form["txtContrasenaFA"]
+    usuario = request.form["txtUsuario"]
+    contrasena = request.form["txtContrasena"]
 
     if not con.is_connected():
         con.reconnect()
     cursor = con.cursor()
 
-    # Insertar el usuario en la base de datos
     sql = "INSERT INTO tst0_usuarios (Nombre_Usuario, Contrasena) VALUES (%s, %s)"
     val = (usuario, contrasena)
     cursor.execute(sql, val)
 
     con.commit()
 
-    # Disparar evento de Pusher (para actualizaciones en tiempo real)
     pusher_client.trigger("registrosTiempoReal", "registroTiempoReal", {
         "usuario": usuario,
         "contrasena": contrasena
     })
 
-    # Retorna un JSON indicando éxito (para AJAX)
-    return jsonify({"status": "success", "usuario": usuario})
-
-# Ruta para buscar usuarios y listarlos
-@app.route("/buscar")
-def buscar():
-    if not con.is_connected():
-        con.reconnect()
-    cursor = con.cursor()
-    cursor.execute("SELECT * FROM tst0_usuarios ORDER BY Id_Usuario DESC")
-    registros = cursor.fetchall()
-
-    return jsonify(registros)
+    return redirect(url_for("index"))
 
 # Ruta para actualizar un usuario
-@app.route('/usuarios/actualizar/<int:id>', methods=['POST'])
-def actualizar_usuario(id):
-    nombre_usuario = request.form['nombre']
-    contrasena = request.form['contrasena']
+@app.route("/usuarios/actualizar/<int:id>", methods=["POST"])
+def usuarios_actualizar(id):
+    usuario = request.form["txtUsuario"]
+    contrasena = request.form["txtContrasena"]
 
     if not con.is_connected():
         con.reconnect()
     cursor = con.cursor()
 
-    sql = """
-        UPDATE tst0_usuarios
-        SET Nombre_Usuario = %s, Contrasena = %s
-        WHERE Id_Usuario = %s
-    """
-    val = (nombre_usuario, contrasena, id)
+    sql = "UPDATE tst0_usuarios SET Nombre_Usuario = %s, Contrasena = %s WHERE Id_Usuario = %s"
+    val = (usuario, contrasena, id)
     cursor.execute(sql, val)
+
     con.commit()
 
-    return jsonify({'mensaje': 'Usuario actualizado correctamente'})
+    return redirect(url_for("index"))
 
 # Ruta para eliminar un usuario
-@app.route('/usuarios/eliminar/<int:id>', methods=['POST'])
-def eliminar_usuario(id):
+@app.route("/usuarios/eliminar/<int:id>", methods=["POST"])
+def usuarios_eliminar(id):
     if not con.is_connected():
         con.reconnect()
     cursor = con.cursor()
@@ -97,9 +81,5 @@ def eliminar_usuario(id):
     sql = "DELETE FROM tst0_usuarios WHERE Id_Usuario = %s"
     val = (id,)
     cursor.execute(sql, val)
+
     con.commit()
-
-    return jsonify({'mensaje': 'Usuario eliminado correctamente'})
-
-if __name__ == "__main__":
-    app.run(debug=True)
