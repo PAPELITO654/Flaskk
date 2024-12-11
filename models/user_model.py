@@ -24,4 +24,3 @@ class UserModel:
         cursor.execute(sql, (username, password))
         self.con.commit()
         return cursor.lastrowid
-
