@@ -1,32 +1,50 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for
 from models.user_model import UserModel
+import pusher
 
-# Crear un Blueprint para el controlador de usuarios
-user_blueprint = Blueprint("user", __name__)
+user_routes = Blueprint("user_routes", __name__)
 
 # Instancia del modelo
 user_model = UserModel()
 
-@user_blueprint.route("/")
+# Configuración de Pusher
+pusher_client = pusher.Pusher(
+    app_id='1767934',
+    key='ffa9ea426828188c22c1',
+    secret='628348e447718a9eec1f',
+    cluster='us2',
+    ssl=True
+)
+
+@user_routes.route("/")
 def index():
-    return render_template("app.html")
+    usuarios = user_model.obtener_usuarios()
+    return render_template("app.html", usuarios=usuarios)
 
-@user_blueprint.route("/usuarios")
-def usuarios():
-    usuarios = user_model.get_all_users()
-    return render_template("usuarios.html", usuarios=usuarios)
+@user_routes.route("/usuarios/guardar", methods=["POST"])
+def usuarios_guardar():
+    usuario = request.form["txtUsuario"]
+    contrasena = request.form["txtContrasena"]
 
-@user_blueprint.route("/usuarios/guardar", methods=["POST"])
-def guardar_usuario():
-    usuario = request.form["txtUsuarioFA"]
-    contrasena = request.form["txtContrasenaFA"]
+    user_model.guardar_usuario(usuario, contrasena)
 
-    # Guardar el usuario utilizando el modelo
-    user_model.create_user(usuario, contrasena)
-    
-    return jsonify({"status": "success", "usuario": usuario})
+    # Notificar mediante Pusher
+    pusher_client.trigger("registrosTiempoReal", "registroTiempoReal", {
+        "usuario": usuario,
+        "contrasena": contrasena
+    })
 
-@user_blueprint.route("/buscar")
-def buscar():
-    usuarios = user_model.get_all_users()
-    return jsonify(usuarios)
+    return redirect(url_for("user_routes.index"))
+
+@user_routes.route("/usuarios/actualizar/<int:id>", methods=["POST"])
+def usuarios_actualizar(id):
+    usuario = request.form["txtUsuario"]
+    contrasena = request.form["txtContrasena"]
+
+    user_model.actualizar_usuario(id, usuario, contrasena)
+    return redirect(url_for("user_routes.index"))
+
+@user_routes.route("/usuarios/eliminar/<int:id>", methods=["POST"])
+def usuarios_eliminar(id):
+    user_model.eliminar_usuario(id)
+    return redirect(url_for("user_routes.index"))
