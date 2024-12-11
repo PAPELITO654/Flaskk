@@ -19,4 +19,3 @@ def save_user():
     password = request.form["txtContrasenaFA"]
     user_id = user_model.add_user(username, password)
     return jsonify({"status": "success", "user_id": user_id, "username": username})
-
