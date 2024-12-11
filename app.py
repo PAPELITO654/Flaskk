@@ -55,6 +55,7 @@ def usuarios_guardar():
     # Retorna un JSON indicando éxito (para AJAX)
     return jsonify({"status": "success", "usuario": usuario})
 
+# Ruta para buscar usuarios y listarlos
 @app.route("/buscar")
 def buscar():
     if not con.is_connected():
@@ -64,6 +65,41 @@ def buscar():
     registros = cursor.fetchall()
 
     return jsonify(registros)
+
+# Ruta para actualizar un usuario
+@app.route('/usuarios/actualizar/<int:id>', methods=['POST'])
+def actualizar_usuario(id):
+    nombre_usuario = request.form['nombre']
+    contrasena = request.form['contrasena']
+
+    if not con.is_connected():
+        con.reconnect()
+    cursor = con.cursor()
+
+    sql = """
+        UPDATE tst0_usuarios
+        SET Nombre_Usuario = %s, Contrasena = %s
+        WHERE Id_Usuario = %s
+    """
+    val = (nombre_usuario, contrasena, id)
+    cursor.execute(sql, val)
+    con.commit()
+
+    return jsonify({'mensaje': 'Usuario actualizado correctamente'})
+
+# Ruta para eliminar un usuario
+@app.route('/usuarios/eliminar/<int:id>', methods=['POST'])
+def eliminar_usuario(id):
+    if not con.is_connected():
+        con.reconnect()
+    cursor = con.cursor()
+
+    sql = "DELETE FROM tst0_usuarios WHERE Id_Usuario = %s"
+    val = (id,)
+    cursor.execute(sql, val)
+    con.commit()
+
+    return jsonify({'mensaje': 'Usuario eliminado correctamente'})
 
 if __name__ == "__main__":
     app.run(debug=True)
